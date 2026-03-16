@@ -18,6 +18,25 @@
 
 add_filter( 'x_enqueue_parent_stylesheet', '__return_true' );
 
+/**
+ * Store and load ACF Local JSON in the child theme acf-json folder.
+ * This keeps field definitions version-controlled and reduces DB lookups.
+ */
+add_filter(
+	'acf/settings/save_json',
+	static function () {
+		return get_stylesheet_directory() . '/acf-json';
+	}
+);
+
+add_filter(
+	'acf/settings/load_json',
+	static function ( $paths ) {
+		$paths[] = get_stylesheet_directory() . '/acf-json';
+		return $paths;
+	}
+);
+
 
 
 // =============================================================================
@@ -147,6 +166,148 @@ function floor4u_register_acf_groups() {
 			),
 		),
 	);
+
+	// =======================================================================
+	// GROUP: LOCATION V3 (group_loc_v3) - 5 tabs
+	// V3 simplified fields used by Cornerstone Dynamic Content.
+	// =======================================================================
+	acf_add_local_field_group( array(
+		'key'      => 'group_loc_v3',
+		'title'    => 'Location Page V3',
+		'location' => array( array( array( 'param' => 'post_type', 'operator' => '==', 'value' => 'location' ) ) ),
+		'active'   => true,
+		'fields'   => array(
+			array( 'key' => 'tab_loc_v3_mode', 'label' => 'Operational Mode', 'type' => 'tab' ),
+			array(
+				'key'      => 'field_loc_mode_v3',
+				'label'    => 'Page Mode',
+				'name'     => 'loc_mode',
+				'type'     => 'select',
+				'required' => 1,
+				'choices'  => array(
+					'branch' => 'Physical Store / Showroom',
+					'city'   => 'Service Area City',
+					'hybrid' => 'Hybrid',
+				),
+				'return_format' => 'value',
+			),
+			array(
+				'key'           => 'field_loc_emit_lb_v3',
+				'label'         => 'Emit LocalBusiness Schema',
+				'name'          => 'loc_emit_lb',
+				'type'          => 'true_false',
+				'required'      => 1,
+				'default_value' => 0,
+			),
+
+			array( 'key' => 'tab_loc_v3_identity', 'label' => 'Page Identity & Hero', 'type' => 'tab' ),
+			array( 'key' => 'field_location_headline', 'label' => 'Location Headline', 'name' => 'location_headline', 'type' => 'text', 'required' => 1 ),
+			array( 'key' => 'field_hero_intro', 'label' => 'Hero Intro', 'name' => 'hero_intro', 'type' => 'textarea', 'required' => 0 ),
+			array( 'key' => 'field_hero_cta', 'label' => 'Hero CTA', 'name' => 'hero_cta', 'type' => 'link', 'required' => 0 ),
+
+			array( 'key' => 'tab_loc_v3_geo', 'label' => 'Geographic Identity', 'type' => 'tab' ),
+			array( 'key' => 'field_address_city', 'label' => 'Address City', 'name' => 'address_city', 'type' => 'text', 'required' => 1 ),
+			array( 'key' => 'field_postal_code', 'label' => 'Postal Code', 'name' => 'postal_code', 'type' => 'text', 'required' => 0 ),
+			array(
+				'key'               => 'field_latitude',
+				'label'             => 'Latitude',
+				'name'              => 'latitude',
+				'type'              => 'number',
+				'required'          => 0,
+				'conditional_logic' => array(
+					array( array( 'field' => 'field_loc_mode_v3', 'operator' => '==', 'value' => 'branch' ) ),
+					array( array( 'field' => 'field_loc_mode_v3', 'operator' => '==', 'value' => 'hybrid' ) ),
+				),
+			),
+			array(
+				'key'               => 'field_longitude',
+				'label'             => 'Longitude',
+				'name'              => 'longitude',
+				'type'              => 'number',
+				'required'          => 0,
+				'conditional_logic' => array(
+					array( array( 'field' => 'field_loc_mode_v3', 'operator' => '==', 'value' => 'branch' ) ),
+					array( array( 'field' => 'field_loc_mode_v3', 'operator' => '==', 'value' => 'hybrid' ) ),
+				),
+			),
+			array( 'key' => 'field_google_place_id', 'label' => 'Google Place ID', 'name' => 'google_place_id', 'type' => 'text', 'required' => 0 ),
+
+			array( 'key' => 'tab_loc_v3_signals', 'label' => 'Local Search Signals', 'type' => 'tab' ),
+			array( 'key' => 'field_city_intro_prose', 'label' => 'City Intro Prose', 'name' => 'city_intro_prose', 'type' => 'wysiwyg', 'required' => 0 ),
+			array( 'key' => 'field_highway_directions', 'label' => 'Highway Directions', 'name' => 'highway_directions', 'type' => 'textarea', 'required' => 0 ),
+			array( 'key' => 'field_local_landmarks', 'label' => 'Local Landmarks', 'name' => 'local_landmarks', 'type' => 'textarea', 'required' => 0 ),
+			array(
+				'key'           => 'field_communities_served',
+				'label'         => 'Communities Served',
+				'name'          => 'communities_served',
+				'type'          => 'taxonomy',
+				'taxonomy'      => 'community',
+				'field_type'    => 'checkbox',
+				'save_terms'    => 1,
+				'load_terms'    => 1,
+				'return_format' => 'object',
+				'required'      => 0,
+			),
+			array( 'key' => 'field_location_map_embed', 'label' => 'Map Embed', 'name' => 'location_map_embed', 'type' => 'textarea', 'required' => 0 ),
+
+			array( 'key' => 'tab_loc_v3_rels', 'label' => 'Relationships', 'type' => 'tab' ),
+			array(
+				'key'           => 'field_featured_services',
+				'label'         => 'Featured Services',
+				'name'          => 'featured_services',
+				'type'          => 'relationship',
+				'post_type'     => array( 'service' ),
+				'return_format' => 'post_object',
+				'required'      => 0,
+			),
+			array(
+				'key'           => 'field_featured_projects',
+				'label'         => 'Featured Projects',
+				'name'          => 'featured_projects',
+				'type'          => 'relationship',
+				'post_type'     => array( 'project' ),
+				'return_format' => 'post_object',
+				'max'           => 6,
+				'required'      => 0,
+			),
+			array(
+				'key'        => 'field_local_reviews',
+				'label'      => 'Local Reviews',
+				'name'       => 'local_reviews',
+				'type'       => 'repeater',
+				'required'   => 0,
+				'sub_fields' => array(
+					array( 'key' => 'field_reviewer_name', 'label' => 'Reviewer Name', 'name' => 'reviewer_name', 'type' => 'text' ),
+					array( 'key' => 'field_review_text', 'label' => 'Review Text', 'name' => 'review_text', 'type' => 'textarea' ),
+					array( 'key' => 'field_review_rating', 'label' => 'Review Rating', 'name' => 'review_rating', 'type' => 'number', 'min' => 1, 'max' => 5 ),
+					array( 'key' => 'field_review_featured', 'label' => 'Featured', 'name' => 'featured', 'type' => 'true_false' ),
+					array( 'key' => 'field_review_date', 'label' => 'Date', 'name' => 'date', 'type' => 'date_picker', 'return_format' => 'Ymd', 'display_format' => 'F j, Y' ),
+				),
+			),
+			array(
+				'key'        => 'field_local_faqs',
+				'label'      => 'Local FAQs',
+				'name'       => 'local_faqs',
+				'type'       => 'repeater',
+				'required'   => 0,
+				'sub_fields' => array(
+					array( 'key' => 'field_faq_question', 'label' => 'Question', 'name' => 'faq_question', 'type' => 'text' ),
+					array( 'key' => 'field_faq_answer', 'label' => 'Answer', 'name' => 'faq_answer', 'type' => 'wysiwyg' ),
+					array( 'key' => 'field_faq_featured', 'label' => 'Featured', 'name' => 'featured', 'type' => 'true_false' ),
+				),
+			),
+			array(
+				'key'        => 'field_schema_same_as_links',
+				'label'      => 'Schema sameAs Links',
+				'name'       => 'schema_same_as_links',
+				'type'       => 'repeater',
+				'required'   => 0,
+				'sub_fields' => array(
+					array( 'key' => 'field_same_as_url', 'label' => 'URL', 'name' => 'same_as_url', 'type' => 'url' ),
+				),
+			),
+		),
+	) );
 
 	// =======================================================================
 	// GROUP: LOCATION  (group_loc_v1) â€” 7 tabs
@@ -393,6 +554,7 @@ function floor4u_register_acf_groups() {
 				'type'          => 'select',
 				'required'      => 1,
 				'choices'       => array(
+					'city'         => 'Service Area City (V3)',
 					'service_area' => 'Service Area City',
 					'branch'       => 'Physical Store / Showroom',
 					'hybrid'       => 'Hybrid',
@@ -682,7 +844,7 @@ function floor4u_register_acf_groups() {
 				'name'         => 'loc_faqs',
 				'type'         => 'repeater',
 				'required'     => 0,
-				'instructions' => 'Page-supporting FAQs only. No FAQPage schema will be emitted. Sort: featured first.',
+				'instructions' => 'Page-supporting FAQs only. Sort: featured first.',
 				'layout'       => 'row',
 				'sub_fields'   => array(
 					array( 'key' => 'field_loc_faq_q',        'label' => 'Question', 'name' => 'q',        'type' => 'text' ),
@@ -1364,7 +1526,272 @@ function floor4u_output_location_schema() {
 		. wp_json_encode( $schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT )
 		. '</script>' . "\n";
 }
-add_action( 'wp_head', 'floor4u_output_location_schema', 30 );
+
+	/**
+	 * V2 + V3 location schema generator.
+	 *
+	 * Strategy notes:
+	 * 1) GBP sync: google_place_id in @id links website and GBP entity.
+	 * 2) AI readiness: explicit services + geographies improve local retrieval.
+	 * 3) sameAs: citation/profile URLs unify entity signals across platforms.
+	 */
+	function floor4u_generate_location_schema() {
+		if ( ! is_singular( 'location' ) ) {
+			return;
+		}
+
+		$post_id = get_the_ID();
+		if ( ! $post_id ) {
+			return;
+		}
+
+		$loc_mode = (string) get_field( 'loc_mode', $post_id );
+		if ( 'service_area' === $loc_mode ) {
+			$loc_mode = 'city';
+		}
+		$emit_lb = (bool) get_field( 'loc_emit_lb', $post_id );
+
+		$business_name  = trim( (string) get_field( 'business_name', $post_id ) );
+		$business_name  = $business_name ?: trim( (string) get_field( 'loc_biz_name', $post_id ) );
+		$business_name  = $business_name ?: 'The Floor 4 U';
+		$business_type  = trim( (string) get_field( 'schema_business_type', $post_id ) ) ?: 'FlooringStore';
+		$phone_raw      = trim( (string) get_field( 'phone_number_raw', $post_id ) );
+		$phone_raw      = $phone_raw ?: trim( (string) get_field( 'loc_biz_phone_raw', $post_id ) );
+		$street_address = trim( (string) get_field( 'street_address', $post_id ) );
+		$street_address = $street_address ?: trim( (string) get_field( 'loc_addr_1', $post_id ) );
+		$address_city   = trim( (string) get_field( 'address_city', $post_id ) );
+		$address_city   = $address_city ?: trim( (string) get_field( 'loc_city_name', $post_id ) );
+		$address_state  = trim( (string) get_field( 'address_state', $post_id ) );
+		$address_state  = $address_state ?: trim( (string) get_field( 'loc_state_code', $post_id ) );
+		$address_state  = $address_state ?: 'IL';
+		$postal_code    = trim( (string) get_field( 'postal_code', $post_id ) );
+		$postal_code    = $postal_code ?: trim( (string) get_field( 'loc_addr_zip', $post_id ) );
+		$price_range    = trim( (string) get_field( 'price_range', $post_id ) ) ?: '$$';
+		$place_id       = trim( (string) get_field( 'google_place_id', $post_id ) );
+		$place_id       = $place_id ?: trim( (string) get_field( 'loc_place_id', $post_id ) );
+		$headline       = trim( (string) get_field( 'location_headline', $post_id ) );
+		$headline       = $headline ?: trim( (string) get_field( 'loc_h1', $post_id ) );
+		$latitude       = get_field( 'latitude', $post_id );
+		$longitude      = get_field( 'longitude', $post_id );
+		if ( '' === (string) $latitude ) {
+			$latitude = get_field( 'loc_lat', $post_id );
+		}
+		if ( '' === (string) $longitude ) {
+			$longitude = get_field( 'loc_lng', $post_id );
+		}
+		$county_name = trim( (string) get_field( 'loc_county_name', $post_id ) );
+
+		$page_url = get_permalink( $post_id );
+		$entity_id = $place_id
+			? 'https://www.google.com/maps/search/?api=1&query=Google&query_place_id=' . rawurlencode( $place_id )
+			: $page_url;
+
+		$name = $business_name;
+		if ( $headline ) {
+			$name .= ' - ' . $headline;
+		}
+
+		$schema = array(
+			'@context'   => 'https://schema.org',
+			'@type'      => $business_type,
+			'@id'        => $entity_id,
+			'name'       => $name,
+			'url'        => $page_url,
+			'telephone'  => $phone_raw,
+			'priceRange' => $price_range,
+		);
+
+		$area_names = array();
+		if ( $address_city ) {
+			$area_names[] = $address_city;
+		}
+		if ( $county_name ) {
+			$area_names[] = $county_name;
+		}
+		$terms = get_the_terms( $post_id, 'community' );
+		if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+			foreach ( $terms as $term ) {
+				$area_names[] = $term->name;
+			}
+		}
+		$area_names = array_values( array_unique( array_filter( $area_names ) ) );
+		if ( ! empty( $area_names ) ) {
+			$schema['areaServed'] = $area_names;
+		}
+
+		$emit_base_schema = true;
+
+		// City mode: emit non-LocalBusiness graph nodes only.
+		if ( 'city' === $loc_mode ) {
+			$graph = array(
+				array(
+					'@type' => 'WebPage',
+					'@id'   => $page_url . '#webpage',
+					'url'   => $page_url,
+					'name'  => get_the_title( $post_id ),
+				),
+				array(
+					'@type' => 'AdministrativeArea',
+					'@id'   => $page_url . '#city',
+					'name'  => $address_city,
+				),
+				array(
+					'@type'            => 'Place',
+					'@id'              => $page_url . '#place',
+					'name'             => $address_city,
+					'containedInPlace' => array( '@id' => $page_url . '#city' ),
+				),
+			);
+
+			$featured_services = get_field( 'featured_services', $post_id );
+			if ( empty( $featured_services ) ) {
+				$featured_services = get_field( 'loc_svcs', $post_id );
+			}
+			if ( is_array( $featured_services ) ) {
+				foreach ( $featured_services as $svc ) {
+					$svc_post = $svc instanceof WP_Post ? $svc : get_post( (int) $svc );
+					if ( $svc_post ) {
+						$graph[] = array(
+							'@type' => 'Service',
+							'@id'   => get_permalink( $svc_post ) . '#service',
+							'name'  => get_the_title( $svc_post ),
+							'url'   => get_permalink( $svc_post ),
+						);
+					}
+				}
+			}
+
+			echo "\n" . '<script type="application/ld+json">' . wp_json_encode( array( '@context' => 'https://schema.org', '@graph' => $graph ), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT ) . '</script>' . "\n";
+			$emit_base_schema = false;
+		} elseif ( in_array( $loc_mode, array( 'branch', 'hybrid' ), true ) && $emit_lb ) {
+			$schema['address'] = array(
+				'@type'           => 'PostalAddress',
+				'streetAddress'   => $street_address,
+				'addressLocality' => $address_city,
+				'addressRegion'   => $address_state,
+				'postalCode'      => $postal_code,
+				'addressCountry'  => 'US',
+			);
+			if ( '' !== (string) $latitude && '' !== (string) $longitude ) {
+				$schema['geo'] = array(
+					'@type'     => 'GeoCoordinates',
+					'latitude'  => (float) $latitude,
+					'longitude' => (float) $longitude,
+				);
+			}
+			$hours = floor4u_build_opening_hours( (array) get_field( 'loc_hours', $post_id ) );
+			if ( ! empty( $hours ) ) {
+				$schema['openingHoursSpecification'] = $hours;
+			}
+
+			$featured_services = get_field( 'featured_services', $post_id );
+			if ( empty( $featured_services ) ) {
+				$featured_services = get_field( 'loc_svcs', $post_id );
+			}
+			if ( is_array( $featured_services ) && ! empty( $featured_services ) ) {
+				$catalog_items = array();
+				foreach ( $featured_services as $svc ) {
+					$svc_post = $svc instanceof WP_Post ? $svc : get_post( (int) $svc );
+					if ( ! $svc_post ) {
+						continue;
+					}
+					$catalog_items[] = array(
+						'@type'       => 'Service',
+						'name'        => get_the_title( $svc_post ),
+						'description' => wp_strip_all_tags( (string) $svc_post->post_excerpt ?: (string) $svc_post->post_content ),
+					);
+				}
+				if ( ! empty( $catalog_items ) ) {
+					$schema['hasOfferCatalog'] = array(
+						'@type'           => 'OfferCatalog',
+						'name'            => 'Flooring and Remodeling Services',
+						'itemListElement' => $catalog_items,
+					);
+				}
+			}
+		}
+
+		if ( $emit_base_schema ) {
+			$local_reviews = get_field( 'local_reviews', $post_id );
+			if ( empty( $local_reviews ) ) {
+				$local_reviews = get_field( 'loc_reviews', $post_id );
+			}
+			if ( is_array( $local_reviews ) && ! empty( $local_reviews ) ) {
+				$reviews = array();
+				foreach ( $local_reviews as $review ) {
+					$reviewer_name = ! empty( $review['reviewer_name'] ) ? $review['reviewer_name'] : ( $review['name'] ?? '' );
+					$review_text   = ! empty( $review['review_text'] ) ? $review['review_text'] : ( $review['body'] ?? '' );
+					$review_rating = ! empty( $review['review_rating'] ) ? (int) $review['review_rating'] : (int) ( $review['rating'] ?? 0 );
+					if ( ! $reviewer_name || ! $review_text ) {
+						continue;
+					}
+					$reviews[] = array(
+						'@type'      => 'Review',
+						'author'     => array( '@type' => 'Person', 'name' => $reviewer_name ),
+						'reviewBody' => wp_strip_all_tags( (string) $review_text ),
+						'reviewRating' => array(
+							'@type'       => 'Rating',
+							'ratingValue' => max( 1, min( 5, $review_rating ) ),
+						),
+					);
+				}
+				if ( ! empty( $reviews ) ) {
+					$schema['review'] = $reviews;
+				}
+			}
+
+			$same_as_rows = get_field( 'schema_same_as_links', $post_id );
+			if ( empty( $same_as_rows ) ) {
+				$same_as_rows = get_field( 'loc_sameas', $post_id );
+			}
+			if ( is_array( $same_as_rows ) ) {
+				$links = array();
+				foreach ( $same_as_rows as $row ) {
+					$url = ! empty( $row['same_as_url'] ) ? $row['same_as_url'] : ( $row['url'] ?? '' );
+					if ( $url ) {
+						$links[] = esc_url_raw( $url );
+					}
+				}
+				if ( ! empty( $links ) ) {
+					$schema['sameAs'] = array_values( array_unique( $links ) );
+				}
+			}
+
+			echo "\n" . '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT ) . '</script>' . "\n";
+		}
+
+		$local_faqs = get_field( 'local_faqs', $post_id );
+		if ( empty( $local_faqs ) ) {
+			$local_faqs = get_field( 'loc_faqs', $post_id );
+		}
+		if ( is_array( $local_faqs ) && ! empty( $local_faqs ) ) {
+			$faq_entities = array();
+			foreach ( $local_faqs as $faq ) {
+				$question = ! empty( $faq['faq_question'] ) ? $faq['faq_question'] : ( $faq['q'] ?? '' );
+				$answer   = ! empty( $faq['faq_answer'] ) ? $faq['faq_answer'] : ( $faq['a'] ?? '' );
+				if ( ! $question || ! $answer ) {
+					continue;
+				}
+				$faq_entities[] = array(
+					'@type'          => 'Question',
+					'name'           => wp_strip_all_tags( (string) $question ),
+					'acceptedAnswer' => array(
+						'@type' => 'Answer',
+						'text'  => wp_kses_post( $answer ),
+					),
+				);
+			}
+			if ( ! empty( $faq_entities ) ) {
+				$faq_schema = array(
+					'@context'    => 'https://schema.org',
+					'@type'       => 'FAQPage',
+					'mainEntity'  => $faq_entities,
+				);
+				echo "\n" . '<script type="application/ld+json">' . wp_json_encode( $faq_schema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT ) . '</script>' . "\n";
+			}
+		}
+	}
+	add_action( 'wp_head', 'floor4u_generate_location_schema', 30 );
 
 /**
  * Output JSON-LD schema for Service single pages.
@@ -1535,13 +1962,15 @@ function floor4u_seed_dummy_data() {
 		return;
 	}
 
+	$force_seed = isset( $_GET['seed_floor4u_force'] ) && '1' === (string) $_GET['seed_floor4u_force'];
+
 	// Simple capability check â€” admin only.
 	if ( ! current_user_can( 'manage_options' ) ) {
 		wp_die( 'Not allowed.' );
 	}
 
 	// Prevent running twice in the same environment.
-	if ( get_option( 'floor4u_seed_done' ) ) {
+	if ( get_option( 'floor4u_seed_done' ) && ! $force_seed ) {
 		wp_die( '<h2>Floor 4U Seeder</h2><p>Dummy data was already seeded. Delete the option <code>floor4u_seed_done</code> from the wp_options table to re-run.</p><p><a href="/wp-admin/">Back to Admin</a></p>' );
 	}
 
@@ -1742,6 +2171,41 @@ function floor4u_seed_dummy_data() {
 		),
 	);
 
+	// Add more locations so the seeder creates 10 test records total.
+	$extra_locations = array(
+		array( 'city' => 'Tinley Park', 'postal' => '60477', 'county' => 'Cook County', 'mode' => 'service_area', 'lat' => '', 'lng' => '' ),
+		array( 'city' => 'Orland Park', 'postal' => '60462', 'county' => 'Cook County', 'mode' => 'branch', 'lat' => 41.6303, 'lng' => -87.8539 ),
+		array( 'city' => 'Manhattan', 'postal' => '60442', 'county' => 'Will County', 'mode' => 'service_area', 'lat' => '', 'lng' => '' ),
+		array( 'city' => 'Joliet', 'postal' => '60435', 'county' => 'Will County', 'mode' => 'hybrid', 'lat' => 41.5250, 'lng' => -88.0817 ),
+		array( 'city' => 'Homer Glen', 'postal' => '60491', 'county' => 'Will County', 'mode' => 'service_area', 'lat' => '', 'lng' => '' ),
+		array( 'city' => 'Lockport', 'postal' => '60441', 'county' => 'Will County', 'mode' => 'branch', 'lat' => 41.5895, 'lng' => -88.0578 ),
+		array( 'city' => 'Palos Park', 'postal' => '60464', 'county' => 'Cook County', 'mode' => 'hybrid', 'lat' => 41.6673, 'lng' => -87.8359 ),
+	);
+
+	foreach ( $extra_locations as $idx => $row ) {
+		$locations_data[] = array(
+			'title'       => 'Flooring Services in ' . $row['city'] . ' IL',
+			'loc_mode'    => $row['mode'],
+			'emit_lb'     => in_array( $row['mode'], array( 'branch', 'hybrid' ), true ) ? 1 : 0,
+			'city'        => $row['city'],
+			'postal'      => $row['postal'],
+			'lat'         => $row['lat'],
+			'lng'         => $row['lng'],
+			'county'      => $row['county'],
+			'headline'    => 'Top Rated Flooring Contractor in ' . $row['city'] . ' IL',
+			'hero_intro'  => 'Floor 4U serves ' . $row['city'] . ' with LVP, hardwood, tile, and carpet installation backed by local crews and clean job sites.',
+			'intro_prose' => '<p>Homeowners in ' . $row['city'] . ' trust Floor 4U for straightforward pricing, clear timelines, and expert installation. We serve neighborhoods across ' . $row['county'] . ' and surrounding communities.</p>',
+			'landmarks'   => "Near downtown " . $row['city'] . "\nClose to major schools and parks\nServing residential neighborhoods throughout the area",
+			'directions'  => "Easy access from local arterials and highways\nServing all of " . $row['city'] . " and nearby communities\nFast estimate scheduling available",
+			'services'    => array( $idx % 6, ( $idx + 1 ) % 6, ( $idx + 2 ) % 6 ),
+			'projects'    => array( $idx % 8, ( $idx + 2 ) % 8, ( $idx + 4 ) % 8 ),
+			'communities' => array( $idx % 5, ( $idx + 1 ) % 5 ),
+		);
+	}
+
+	$created_locations = 0;
+	$target_locations  = count( $locations_data );
+
 	foreach ( $locations_data as $loc ) {
 		$existing = get_page_by_title( $loc['title'], OBJECT, 'location' );
 		if ( $existing ) {
@@ -1759,6 +2223,8 @@ function floor4u_seed_dummy_data() {
 			continue;
 		}
 
+		$created_locations++;
+
 		// ACF field updates use field keys for reliability.
 		update_field( 'field_loc_mode',         $loc['loc_mode'],    $loc_post_id );
 		update_field( 'field_loc_emit_lb',      $loc['emit_lb'],     $loc_post_id );
@@ -1771,7 +2237,23 @@ function floor4u_seed_dummy_data() {
 		update_field( 'field_loc_county_name',  $loc['county'],      $loc_post_id );
 		update_field( 'field_loc_status',       'active',            $loc_post_id );
 		update_field( 'field_loc_biz_name',     'Floor 4U',          $loc_post_id );
+		update_field( 'field_loc_biz_phone',    '(815) 555-0100',    $loc_post_id );
+		update_field( 'field_loc_biz_phone_raw', '+18155550100',     $loc_post_id );
 		update_field( 'field_loc_biz_url',      home_url( '/' ),     $loc_post_id );
+
+		// V3 simplified field set (for Cornerstone bindings).
+		$loc_mode_v3 = 'service_area' === $loc['loc_mode'] ? 'city' : $loc['loc_mode'];
+		update_field( 'field_loc_mode_v3',      $loc_mode_v3,        $loc_post_id );
+		update_field( 'field_loc_emit_lb_v3',   $loc['emit_lb'],     $loc_post_id );
+		update_field( 'field_location_headline', $loc['headline'],    $loc_post_id );
+		update_field( 'field_hero_intro',       wp_strip_all_tags( $loc['hero_intro'] ), $loc_post_id );
+		update_field( 'field_address_city',     $loc['city'],        $loc_post_id );
+		update_field( 'field_postal_code',      $loc['postal'],      $loc_post_id );
+		update_field( 'field_google_place_id',  sanitize_title( $loc['city'] ) . '-place-id', $loc_post_id );
+		update_field( 'field_city_intro_prose', $loc['intro_prose'], $loc_post_id );
+		update_field( 'field_local_landmarks',  $loc['landmarks'],   $loc_post_id );
+		update_field( 'field_highway_directions', $loc['directions'], $loc_post_id );
+		update_field( 'field_location_map_embed', '<iframe src="https://www.google.com/maps?q=' . rawurlencode( $loc['city'] . ' IL' ) . '&output=embed" width="600" height="350" style="border:0;" loading="lazy"></iframe>', $loc_post_id );
 
 		// Seed local landmarks repeater.
 		if ( ! empty( $loc['landmarks'] ) ) {
@@ -1788,6 +2270,8 @@ function floor4u_seed_dummy_data() {
 		if ( '' !== (string) $loc['lat'] ) {
 			update_field( 'field_loc_lat', $loc['lat'], $loc_post_id );
 			update_field( 'field_loc_lng', $loc['lng'], $loc_post_id );
+			update_field( 'field_latitude', $loc['lat'], $loc_post_id );
+			update_field( 'field_longitude', $loc['lng'], $loc_post_id );
 		}
 
 		// Map service indexes to actual post IDs.
@@ -1800,6 +2284,7 @@ function floor4u_seed_dummy_data() {
 		if ( ! empty( $linked_services ) ) {
 			update_field( 'field_loc_svcs', $linked_services, $loc_post_id );
 			update_field( 'field_loc_svc_primary', array( $linked_services[0] ), $loc_post_id );
+			update_field( 'field_featured_services', $linked_services, $loc_post_id );
 		}
 
 		// Map project indexes to actual post IDs.
@@ -1811,6 +2296,7 @@ function floor4u_seed_dummy_data() {
 		}
 		if ( ! empty( $linked_projects ) ) {
 			update_field( 'field_loc_prjs', $linked_projects, $loc_post_id );
+			update_field( 'field_featured_projects', $linked_projects, $loc_post_id );
 		}
 
 		// Assign community terms.
@@ -1823,7 +2309,56 @@ function floor4u_seed_dummy_data() {
 		if ( ! empty( $linked_communities ) ) {
 			wp_set_post_terms( $loc_post_id, $linked_communities, 'community' );
 			update_field( 'field_loc_communities', $linked_communities, $loc_post_id );
+			update_field( 'field_communities_served', $linked_communities, $loc_post_id );
 		}
+
+		// V3 repeater content for reviews + FAQs + sameAs links.
+		update_field(
+			'field_local_reviews',
+			array(
+				array(
+					'reviewer_name' => 'Sarah M.',
+					'review_text'   => 'Great communication, clean install, and excellent result.',
+					'review_rating' => 5,
+					'featured'      => 1,
+					'date'          => '20260301',
+				),
+				array(
+					'reviewer_name' => 'John T.',
+					'review_text'   => 'Team was on time and finished exactly when promised.',
+					'review_rating' => 5,
+					'featured'      => 0,
+					'date'          => '20260215',
+				),
+			),
+			$loc_post_id
+		);
+
+		update_field(
+			'field_local_faqs',
+			array(
+				array(
+					'faq_question' => 'How long does LVP installation take in ' . $loc['city'] . '?',
+					'faq_answer'   => '<p>Most single-floor installs are completed in 1-2 days depending on prep and furniture moves.</p>',
+					'featured'     => 1,
+				),
+				array(
+					'faq_question' => 'Do you provide free estimates?',
+					'faq_answer'   => '<p>Yes. We provide no-obligation in-home estimates with material and labor options.</p>',
+					'featured'     => 0,
+				),
+			),
+			$loc_post_id
+		);
+
+		update_field(
+			'field_schema_same_as_links',
+			array(
+				array( 'same_as_url' => 'https://www.houzz.com/pro/floor4u' ),
+				array( 'same_as_url' => 'https://www.yelp.com/biz/floor-4-u' ),
+			),
+			$loc_post_id
+		);
 	}
 
 	// Mark seeder as done so it won't run a second time.
@@ -1835,7 +2370,8 @@ function floor4u_seed_dummy_data() {
 			<li>5 Community terms created</li>
 			<li>6 Service posts created</li>
 			<li>8 Project posts created</li>
-			<li>3 Location posts created (service_area / branch / hybrid)</li>
+			<li>' . (int) $target_locations . ' Location records targeted</li>
+			<li>' . (int) $created_locations . ' new Location records created in this run</li>
 		</ul>
 		<p style="font-family:sans-serif"><a href="/wp-admin/">&#8592; Back to Admin</a></p>'
 	);
